@@ -27,7 +27,7 @@ const projects = [
   {
     tech: "React + Three.js + Tailwind",
     thumbnail: "/assets/project-portfolio.png",
-    github: "https://esakkirajaportfolio-kkzeyc29k-tcs8.vercel.app/",
+    github: "https://rajaportfolio1.vercel.app/",
   },
 ];
 
