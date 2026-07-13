@@ -27,7 +27,7 @@ const projects = [
   {
     tech: "React + Three.js + Tailwind",
     thumbnail: "/assets/project-portfolio.png",
-    github: "https://rajaportfolio1.vercel.app/",
+    github: "https://esakkirajaportfolio-kkzeyc29k-tcs8.vercel.app/",
   },
 ];
 
@@ -103,10 +103,11 @@ function ProjectCard({ item }: { item: typeof projects[0] }) {
   );
 }
 
-function CertCard({ item }: { item: typeof certificates[0] }) {
+function CertCard({ item, onPreview }: { item: typeof certificates[0]; onPreview: () => void }) {
   const [downloading, setDownloading] = useState(false);
 
-  const handleDownload = async () => {
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     setDownloading(true);
     try {
       const response = await fetch(item.thumbnail, { mode: "cors" });
@@ -127,8 +128,9 @@ function CertCard({ item }: { item: typeof certificates[0] }) {
 
   return (
     <div
+      onClick={onPreview}
       className="group relative rounded-2xl border border-white/15 overflow-hidden bg-white/[0.06]
-      hover:border-white/25 transition-all duration-500
+      hover:border-white/25 transition-all duration-500 cursor-pointer
       hover:-translate-y-2 hover:shadow-2xl hover:shadow-white/10 backdrop-blur-md"
       style={{ backdropFilter: "blur(20px)" }}
     >
@@ -139,6 +141,15 @@ function CertCard({ item }: { item: typeof certificates[0] }) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30">
+          <span className="flex items-center gap-2 text-white text-xs font-semibold tracking-wide border border-white/40 rounded-full px-4 py-2 bg-black/40">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+            </svg>
+            Preview
+          </span>
+        </div>
         <div className="absolute bottom-4 left-4 right-4">
           <p className="text-white font-semibold text-sm leading-snug line-clamp-2">{item.title}</p>
         </div>
@@ -156,6 +167,67 @@ function CertCard({ item }: { item: typeof certificates[0] }) {
         >
           {downloading ? <Spinner /> : <DownloadIcon />}
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Certificate Lightbox ──────────────────────────────────────────────────
+function CertLightbox({
+  item,
+  onClose,
+}: {
+  item: typeof certificates[0] | null;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!item) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [item, onClose]);
+
+  if (!item) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-8 bg-black/85"
+      style={{ backdropFilter: "blur(8px)", animation: "fadeSlideUp 0.25s ease forwards" }}
+    >
+      <button
+        onClick={onClose}
+        aria-label="Close preview"
+        className="absolute top-5 right-5 sm:top-8 sm:right-8 flex items-center justify-center w-11 h-11 rounded-full
+        bg-white/10 border border-white/20 text-white hover:bg-white/20 hover:border-white/40
+        transition-all duration-200 active:scale-95 z-10"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative max-w-4xl w-full max-h-[85vh] flex flex-col items-center gap-4"
+      >
+        <img
+          src={item.thumbnail}
+          alt={item.title}
+          className="max-w-full max-h-[70vh] object-contain rounded-xl border border-white/15 shadow-2xl shadow-black/60 bg-white/5"
+        />
+        <div className="text-center px-4">
+          <p className="text-white font-semibold text-sm sm:text-base">{item.title}</p>
+          <p className="text-white/40 text-[10px] sm:text-xs uppercase tracking-[0.25em] font-mono mt-1">
+            {item.tech}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -405,6 +477,7 @@ const tabs: { id: TabId; label: string }[] = [
 export default function ShowcaseSection() {
   const [active, setActive] = useState<TabId>("projects");
   const [animKey, setAnimKey] = useState(0);
+  const [lightboxItem, setLightboxItem] = useState<typeof certificates[0] | null>(null);
   const touchStartX = useRef<number | null>(null);
 
   const switchTab = useCallback(
@@ -529,7 +602,7 @@ export default function ShowcaseSection() {
                   className="opacity-0"
                   style={{ animation: `fadeSlideUp 0.5s ease ${i * 0.08}s forwards` }}
                 >
-                  <CertCard item={item} />
+                  <CertCard item={item} onPreview={() => setLightboxItem(item)} />
                 </div>
               ))}
             </div>
@@ -568,6 +641,8 @@ export default function ShowcaseSection() {
           to   { transform: translateX(100%); }
         }
       `}</style>
+
+      <CertLightbox item={lightboxItem} onClose={() => setLightboxItem(null)} />
     </section>
   );
 }
